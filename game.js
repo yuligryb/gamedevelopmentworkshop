@@ -6,10 +6,10 @@ const config = {
     scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
-        width: 800,
-        height: 600
+        width: 1200,
+        height: 800
     },
-    backgroundColor: '#87CEEB',
+    backgroundColor: '#0a0a1a',
     physics: {
         default: 'arcade',
         arcade: {
@@ -29,10 +29,11 @@ const config = {
 // ========================================
 let player;
 let stars;
-let bombs;
+let asteroids;
 let score = 0;
 let scoreText;
 let gameOver = false;
+let gameWon = false;
 let cursors;
 let wasd;
 
@@ -40,11 +41,11 @@ let wasd;
 // PRELOAD - Load Images
 // ========================================
 function preload() {
-    // Load images from a free CDN (placeholder images)
+    // Load images from Phaser Labs CDN
     this.load.image('sky', 'https://labs.phaser.io/assets/skies/space3.png');
-    this.load.image('player', 'https://labs.phaser.io/assets/sprites/phaser-dude.png');
+    this.load.image('ship', 'https://labs.phaser.io/assets/sprites/thrust_ship2.png');
     this.load.image('star', 'https://labs.phaser.io/assets/sprites/star.png');
-    this.load.image('bomb', 'https://labs.phaser.io/assets/sprites/bomb.png');
+    this.load.image('asteroid', 'https://labs.phaser.io/assets/sprites/asteroid1.png');
 }
 
 // ========================================
@@ -52,29 +53,39 @@ function preload() {
 // ========================================
 function create() {
     // Add background
-    this.add.image(400, 300, 'sky');
+    this.add.image(600, 400, 'sky').setDisplaySize(1200, 800);
     
     // Add title
-    this.add.text(400, 50, 'COLLECT THE STARS!', {
-        fontSize: '40px',
+    this.add.text(600, 50, 'COLLECT THE STARS!', {
+        fontSize: '48px',
         fill: '#fff',
+        fontStyle: 'bold',
+        stroke: '#000',
+        strokeThickness: 6
+    }).setOrigin(0.5);
+    
+    // Add goal text
+    this.add.text(600, 110, 'Get 100 Points to Win!', {
+        fontSize: '28px',
+        fill: '#ffeb3b',
         fontStyle: 'bold',
         stroke: '#000',
         strokeThickness: 4
     }).setOrigin(0.5);
     
-    // Create the player
-    player = this.physics.add.sprite(400, 500, 'player');
+    // Create the player (spaceship)
+    player = this.physics.add.sprite(600, 700, 'ship');
     player.setCollideWorldBounds(true);
-    player.setScale(0.15);
+    player.setScale(0.8);
+    player.setRotation(-1.57); // Point upward
     
     // Create stars group
     stars = this.physics.add.group();
     
-    // Create bombs group
-    bombs = this.physics.add.group();
+    // Create asteroids group
+    asteroids = this.physics.add.group();
     
-    // Setup keyboard controls (both Arrow keys and WASD)
+    // Setup keyboard controls
     cursors = this.input.keyboard.createCursorKeys();
     wasd = this.input.keyboard.addKeys({
         up: 'W',
@@ -84,65 +95,68 @@ function create() {
     });
     
     // Score display
-    scoreText = this.add.text(16, 16, 'Score: 0', {
-        fontSize: '32px',
+    scoreText = this.add.text(20, 20, 'Score: 0 / 100', {
+        fontSize: '36px',
         fill: '#fff',
         fontStyle: 'bold',
         stroke: '#000',
-        strokeThickness: 3
+        strokeThickness: 4
     });
     
     // Instructions
-    this.add.text(400, 570, 'Arrow Keys or WASD to Move', {
-        fontSize: '20px',
+    this.add.text(600, 760, 'Arrow Keys or WASD to Move', {
+        fontSize: '24px',
         fill: '#fff',
         stroke: '#000',
-        strokeThickness: 2
+        strokeThickness: 3
     }).setOrigin(0.5);
     
-    // Spawn stars every 1.5 seconds
+    // Spawn stars every 1 second
     this.time.addEvent({
-        delay: 1500,
+        delay: 1000,
         callback: spawnStar,
         callbackScope: this,
         loop: true
     });
     
-    // Spawn bombs every 3 seconds
+    // Spawn asteroids more frequently
     this.time.addEvent({
-        delay: 3000,
-        callback: spawnBomb,
+        delay: 800,
+        callback: spawnAsteroid,
         callbackScope: this,
         loop: true
     });
     
     // Check collisions
     this.physics.add.overlap(player, stars, collectStar, null, this);
-    this.physics.add.overlap(player, bombs, hitBomb, null, this);
+    this.physics.add.overlap(player, asteroids, hitAsteroid, null, this);
 }
 
 // ========================================
 // SPAWN STAR
 // ========================================
 function spawnStar() {
-    if (gameOver) return;
+    if (gameOver || gameWon) return;
     
-    let x = Phaser.Math.Between(50, 750);
+    let x = Phaser.Math.Between(80, 1120);
     let star = stars.create(x, 0, 'star');
-    star.setScale(0.5);
-    star.setVelocityY(150);
+    star.setScale(0.8);
+    star.setVelocityY(180);
 }
 
 // ========================================
-// SPAWN BOMB
+// SPAWN ASTEROID
 // ========================================
-function spawnBomb() {
-    if (gameOver) return;
+function spawnAsteroid() {
+    if (gameOver || gameWon) return;
     
-    let x = Phaser.Math.Between(50, 750);
-    let bomb = bombs.create(x, 0, 'bomb');
-    bomb.setScale(0.8);
-    bomb.setVelocityY(200 + score * 3);
+    let x = Phaser.Math.Between(80, 1120);
+    let asteroid = asteroids.create(x, 0, 'asteroid');
+    asteroid.setScale(0.3);
+    asteroid.setVelocityY(220 + score * 2);
+    
+    // Make asteroids spin
+    asteroid.setAngularVelocity(100);
 }
 
 // ========================================
@@ -151,24 +165,30 @@ function spawnBomb() {
 function collectStar(player, star) {
     star.destroy();
     
-    // Add points
+    // Add 10 points
     score += 10;
-    scoreText.setText('Score: ' + score);
+    scoreText.setText('Score: ' + score + ' / 100');
     
     // Play a simple scale animation
     this.tweens.add({
         targets: player,
-        scaleX: 0.18,
-        scaleY: 0.18,
+        scaleX: 0.9,
+        scaleY: 0.9,
         duration: 100,
         yoyo: true
     });
+    
+    // Check if player won
+    if (score >= 100) {
+        gameWon = true;
+        showWinScreen.call(this);
+    }
 }
 
 // ========================================
-// HIT BOMB - Game Over
+// HIT ASTEROID - Game Over
 // ========================================
-function hitBomb(player, bomb) {
+function hitAsteroid(player, asteroid) {
     this.physics.pause();
     player.setTint(0xff0000);
     gameOver = true;
@@ -177,36 +197,88 @@ function hitBomb(player, bomb) {
 }
 
 // ========================================
-// GAME OVER SCREEN
+// WIN SCREEN
 // ========================================
-function showGameOver() {
+function showWinScreen() {
+    this.physics.pause();
+    
     // Dark overlay
-    let overlay = this.add.rectangle(400, 300, 800, 600, 0x000000, 0.8);
+    let overlay = this.add.rectangle(600, 400, 1200, 800, 0x000000, 0.8);
     
-    // Game Over Box
-    let box = this.add.rectangle(400, 300, 500, 350, 0x222222);
-    box.setStrokeStyle(6, 0xffffff);
+    // Win Box
+    let box = this.add.rectangle(600, 400, 600, 400, 0x1b5e20);
+    box.setStrokeStyle(8, 0xffd700);
     
-    // Game Over Text
-    this.add.text(400, 180, 'GAME OVER!', {
-        fontSize: '60px',
-        fill: '#ff4444',
+    // Win Text
+    this.add.text(600, 250, 'YOU WIN!', {
+        fontSize: '72px',
+        fill: '#ffeb3b',
         fontStyle: 'bold'
     }).setOrigin(0.5);
     
     // Final Score
-    this.add.text(400, 260, 'Final Score: ' + score, {
-        fontSize: '36px',
+    this.add.text(600, 350, 'You collected 100 points!', {
+        fontSize: '40px',
         fill: '#ffffff',
         fontStyle: 'bold'
     }).setOrigin(0.5);
     
     // Play Again Button
-    let playAgainButton = this.add.text(400, 360, 'PLAY AGAIN', {
-        fontSize: '32px',
+    let playAgainButton = this.add.text(600, 480, 'PLAY AGAIN', {
+        fontSize: '36px',
         fill: '#ffffff',
         backgroundColor: '#4CAF50',
-        padding: { x: 30, y: 15 }
+        padding: { x: 40, y: 20 }
+    }).setOrigin(0.5);
+    
+    playAgainButton.setInteractive({ useHandCursor: true });
+    
+    playAgainButton.on('pointerdown', () => {
+        score = 0;
+        gameWon = false;
+        this.scene.restart();
+    });
+    
+    playAgainButton.on('pointerover', () => {
+        playAgainButton.setStyle({ backgroundColor: '#45a049' });
+    });
+    
+    playAgainButton.on('pointerout', () => {
+        playAgainButton.setStyle({ backgroundColor: '#4CAF50' });
+    });
+}
+
+// ========================================
+// GAME OVER SCREEN
+// ========================================
+function showGameOver() {
+    // Dark overlay
+    let overlay = this.add.rectangle(600, 400, 1200, 800, 0x000000, 0.8);
+    
+    // Game Over Box
+    let box = this.add.rectangle(600, 400, 600, 400, 0x222222);
+    box.setStrokeStyle(8, 0xffffff);
+    
+    // Game Over Text
+    this.add.text(600, 250, 'GAME OVER!', {
+        fontSize: '72px',
+        fill: '#ff4444',
+        fontStyle: 'bold'
+    }).setOrigin(0.5);
+    
+    // Final Score
+    this.add.text(600, 350, 'Score: ' + score + ' / 100', {
+        fontSize: '40px',
+        fill: '#ffffff',
+        fontStyle: 'bold'
+    }).setOrigin(0.5);
+    
+    // Play Again Button
+    let playAgainButton = this.add.text(600, 480, 'PLAY AGAIN', {
+        fontSize: '36px',
+        fill: '#ffffff',
+        backgroundColor: '#4CAF50',
+        padding: { x: 40, y: 20 }
     }).setOrigin(0.5);
     
     playAgainButton.setInteractive({ useHandCursor: true });
@@ -230,28 +302,29 @@ function showGameOver() {
 // UPDATE - Runs Every Frame
 // ========================================
 function update() {
-    if (gameOver) return;
+    if (gameOver || gameWon) return;
     
     // Move player left
     if (cursors.left.isDown || wasd.left.isDown) {
-        player.setVelocityX(-300);
+        player.setVelocityX(-350);
     }
     // Move player right
     else if (cursors.right.isDown || wasd.right.isDown) {
-        player.setVelocityX(300);
+        player.setVelocityX(350);
     }
     // Stop moving
     else {
         player.setVelocityX(0);
     }
     
-    // Clean up stars and bombs that fall off screen
+    // Clean up stars that fall off screen
     stars.children.entries.forEach(star => {
-        if (star.y > 620) star.destroy();
+        if (star.y > 820) star.destroy();
     });
     
-    bombs.children.entries.forEach(bomb => {
-        if (bomb.y > 620) bomb.destroy();
+    // Clean up asteroids that fall off screen
+    asteroids.children.entries.forEach(asteroid => {
+        if (asteroid.y > 820) asteroid.destroy();
     });
 }
 
