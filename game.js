@@ -45,7 +45,7 @@ function preload() {
     this.load.image('sky', 'https://labs.phaser.io/assets/skies/space3.png');
     this.load.image('ship', 'https://labs.phaser.io/assets/sprites/thrust_ship2.png');
     this.load.image('star', 'https://labs.phaser.io/assets/sprites/star.png');
-    this.load.image('asteroid', 'https://labs.phaser.io/assets/sprites/asteroid1.png');
+    this.load.image('asteroid', 'https://labs.phaser.io/assets/sprites/purple_ball.png');
 }
 
 // ========================================
@@ -76,7 +76,7 @@ function create() {
     // Create the player (spaceship)
     player = this.physics.add.sprite(600, 700, 'ship');
     player.setCollideWorldBounds(true);
-    player.setScale(0.8);
+    player.setScale(1.5);
     player.setRotation(-1.57); // Point upward
     
     // Create stars group
@@ -141,7 +141,7 @@ function spawnStar() {
     let x = Phaser.Math.Between(80, 1120);
     let star = stars.create(x, 0, 'star');
     star.setScale(0.8);
-    star.setVelocityY(180);
+    star.setVelocityY(280);
 }
 
 // ========================================
@@ -152,7 +152,7 @@ function spawnAsteroid() {
     
     let x = Phaser.Math.Between(80, 1120);
     let asteroid = asteroids.create(x, 0, 'asteroid');
-    asteroid.setScale(0.3);
+    asteroid.setScale(0.6);
     asteroid.setVelocityY(220 + score * 2);
     
     // Make asteroids spin
@@ -172,8 +172,8 @@ function collectStar(player, star) {
     // Play a simple scale animation
     this.tweens.add({
         targets: player,
-        scaleX: 0.9,
-        scaleY: 0.9,
+        scaleX: 1.7,
+        scaleY: 1.7,
         duration: 100,
         yoyo: true
     });
