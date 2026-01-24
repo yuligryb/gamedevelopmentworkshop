@@ -4,10 +4,10 @@
 const config = {
     type: Phaser.AUTO,
     scale: {
-        mode: Phaser.Scale.FIT,
+        mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
-        width: 1200,
-        height: 800
+        width: window.innerWidth,
+        height: window.innerHeight
     },
     backgroundColor: '#0a0a1a',
     physics: {
@@ -36,6 +36,8 @@ let gameOver = false;
 let gameWon = false;
 let cursors;
 let wasd;
+let gameWidth;
+let gameHeight;
 
 // ========================================
 // PRELOAD - Load Images
@@ -52,11 +54,15 @@ function preload() {
 // CREATE - Setup the Game
 // ========================================
 function create() {
+    // Get game dimensions
+    gameWidth = this.scale.width;
+    gameHeight = this.scale.height;
+    
     // Add background
-    this.add.image(600, 400, 'sky').setDisplaySize(1200, 800);
+    this.add.image(gameWidth / 2, gameHeight / 2, 'sky').setDisplaySize(gameWidth, gameHeight);
     
     // Add title
-    this.add.text(600, 50, 'COLLECT THE STARS!', {
+    this.add.text(gameWidth / 2, 50, 'COLLECT THE STARS!', {
         fontSize: '48px',
         fill: '#fff',
         fontStyle: 'bold',
@@ -65,7 +71,7 @@ function create() {
     }).setOrigin(0.5);
     
     // Add goal text
-    this.add.text(600, 110, 'Get 100 Points to Win!', {
+    this.add.text(gameWidth / 2, 110, 'Get 100 Points to Win!', {
         fontSize: '28px',
         fill: '#ffeb3b',
         fontStyle: 'bold',
@@ -73,10 +79,10 @@ function create() {
         strokeThickness: 4
     }).setOrigin(0.5);
     
-    // Create the player (spaceship)
-    player = this.physics.add.sprite(600, 700, 'ship');
+    // Create the player (spaceship) - MUCH BIGGER
+    player = this.physics.add.sprite(gameWidth / 2, gameHeight - 100, 'ship');
     player.setCollideWorldBounds(true);
-    player.setScale(1.5);
+    player.setScale(2.5);
     player.setRotation(-1.57); // Point upward
     
     // Create stars group
@@ -104,7 +110,7 @@ function create() {
     });
     
     // Instructions
-    this.add.text(600, 760, 'Arrow Keys or WASD to Move', {
+    this.add.text(gameWidth / 2, gameHeight - 40, 'Arrow Keys or WASD to Move', {
         fontSize: '24px',
         fill: '#fff',
         stroke: '#000',
@@ -138,7 +144,7 @@ function create() {
 function spawnStar() {
     if (gameOver || gameWon) return;
     
-    let x = Phaser.Math.Between(80, 1120);
+    let x = Phaser.Math.Between(80, gameWidth - 80);
     let star = stars.create(x, 0, 'star');
     star.setScale(0.8);
     star.setVelocityY(280);
@@ -150,9 +156,9 @@ function spawnStar() {
 function spawnAsteroid() {
     if (gameOver || gameWon) return;
     
-    let x = Phaser.Math.Between(80, 1120);
+    let x = Phaser.Math.Between(80, gameWidth - 80);
     let asteroid = asteroids.create(x, 0, 'asteroid');
-    asteroid.setScale(0.6);
+    asteroid.setScale(1.2);
     asteroid.setVelocityY(220 + score * 2);
     
     // Make asteroids spin
@@ -172,8 +178,8 @@ function collectStar(player, star) {
     // Play a simple scale animation
     this.tweens.add({
         targets: player,
-        scaleX: 1.7,
-        scaleY: 1.7,
+        scaleX: 2.8,
+        scaleY: 2.8,
         duration: 100,
         yoyo: true
     });
@@ -203,28 +209,28 @@ function showWinScreen() {
     this.physics.pause();
     
     // Dark overlay
-    let overlay = this.add.rectangle(600, 400, 1200, 800, 0x000000, 0.8);
+    let overlay = this.add.rectangle(gameWidth / 2, gameHeight / 2, gameWidth, gameHeight, 0x000000, 0.8);
     
     // Win Box
-    let box = this.add.rectangle(600, 400, 600, 400, 0x1b5e20);
+    let box = this.add.rectangle(gameWidth / 2, gameHeight / 2, 600, 400, 0x1b5e20);
     box.setStrokeStyle(8, 0xffd700);
     
     // Win Text
-    this.add.text(600, 250, 'YOU WIN!', {
+    this.add.text(gameWidth / 2, gameHeight / 2 - 150, 'YOU WIN!', {
         fontSize: '72px',
         fill: '#ffeb3b',
         fontStyle: 'bold'
     }).setOrigin(0.5);
     
     // Final Score
-    this.add.text(600, 350, 'You collected 100 points!', {
+    this.add.text(gameWidth / 2, gameHeight / 2 - 50, 'You collected 100 points!', {
         fontSize: '40px',
         fill: '#ffffff',
         fontStyle: 'bold'
     }).setOrigin(0.5);
     
     // Play Again Button
-    let playAgainButton = this.add.text(600, 480, 'PLAY AGAIN', {
+    let playAgainButton = this.add.text(gameWidth / 2, gameHeight / 2 + 80, 'PLAY AGAIN', {
         fontSize: '36px',
         fill: '#ffffff',
         backgroundColor: '#4CAF50',
@@ -253,28 +259,28 @@ function showWinScreen() {
 // ========================================
 function showGameOver() {
     // Dark overlay
-    let overlay = this.add.rectangle(600, 400, 1200, 800, 0x000000, 0.8);
+    let overlay = this.add.rectangle(gameWidth / 2, gameHeight / 2, gameWidth, gameHeight, 0x000000, 0.8);
     
     // Game Over Box
-    let box = this.add.rectangle(600, 400, 600, 400, 0x222222);
+    let box = this.add.rectangle(gameWidth / 2, gameHeight / 2, 600, 400, 0x222222);
     box.setStrokeStyle(8, 0xffffff);
     
     // Game Over Text
-    this.add.text(600, 250, 'GAME OVER!', {
+    this.add.text(gameWidth / 2, gameHeight / 2 - 150, 'GAME OVER!', {
         fontSize: '72px',
         fill: '#ff4444',
         fontStyle: 'bold'
     }).setOrigin(0.5);
     
     // Final Score
-    this.add.text(600, 350, 'Score: ' + score + ' / 100', {
+    this.add.text(gameWidth / 2, gameHeight / 2 - 50, 'Score: ' + score + ' / 100', {
         fontSize: '40px',
         fill: '#ffffff',
         fontStyle: 'bold'
     }).setOrigin(0.5);
     
     // Play Again Button
-    let playAgainButton = this.add.text(600, 480, 'PLAY AGAIN', {
+    let playAgainButton = this.add.text(gameWidth / 2, gameHeight / 2 + 80, 'PLAY AGAIN', {
         fontSize: '36px',
         fill: '#ffffff',
         backgroundColor: '#4CAF50',
@@ -319,12 +325,12 @@ function update() {
     
     // Clean up stars that fall off screen
     stars.children.entries.forEach(star => {
-        if (star.y > 820) star.destroy();
+        if (star.y > gameHeight + 20) star.destroy();
     });
     
     // Clean up asteroids that fall off screen
     asteroids.children.entries.forEach(asteroid => {
-        if (asteroid.y > 820) asteroid.destroy();
+        if (asteroid.y > gameHeight + 20) asteroid.destroy();
     });
 }
 
