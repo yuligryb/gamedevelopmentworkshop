@@ -79,11 +79,11 @@ function create() {
         strokeThickness: 4
     }).setOrigin(0.5);
     
-    // Create the player (spaceship) - MUCH BIGGER
+    // Create the player (spaceship)
     player = this.physics.add.sprite(gameWidth / 2, gameHeight - 100, 'ship');
     player.setCollideWorldBounds(true);
-    player.setScale(2.5);
-    player.setRotation(-1.57); // Point upward
+    player.setScale(3.5);
+    player.setRotation(0); // Point upward
     
     // Create stars group
     stars = this.physics.add.group();
